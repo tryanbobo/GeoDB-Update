@@ -1,5 +1,6 @@
 import arcpy
 import os
+# from arcpy.da import SearchCursor
 
 arcpy.env.workspace = r"M:\MapCom\Shapefiles_M4\2023-11-01"
 shpLocation = arcpy.env.workspace
@@ -18,11 +19,21 @@ if shpFiles:
         featClassPath = os.path.join(gdbPath, featClassName)
         # check if featclass in geoDG exist first only existing feature class are "updated"
         if arcpy.Exists(featClassPath):
-            # deletes features from the geDB that were removed from the shapefiles in the workspace
-            # arcpy.DeleteField_management(shpPath, os.path.join(gdbPath, featClassName))
-            # appends features from the geDB that were added to the shapefiles in the workspace
-            arcpy.Append_management(shpPath, os.path.join(gdbPath, featClassName), "No_Test")
-            # arcpy.FeatureClassToFeatureClass_conversion(shpPath, gdbPath, featClassName)
+            # below section checks for each shpfiles feature ID. If it is not found in the shpfile then geoDB feature is removed.
+            # create a list of unique identifiers in the shapefile
+            shpIds = [row[0] for row in arcpy.da.SearchCursor(shpPath, "ID")]
+            # create edit session
+            with arcpy.da.Editor(gdbPath) as Edit:
+                # iterate over the features in the geodatabase feature class
+                with arcpy.da.UpdateCursor(featClassPath, ["ID"]) as cursor:
+                    for row in cursor:
+                        # if the feature's identifier is not in the list, delete the feature
+                        if row[0] not in shpIds:
+                            cursor.deleteRow()
+
+                # append new features from the list of shapefiles to the geodatabase
+            arcpy.Append_management(shpPath, featClassPath, "NO_TEST")
+
             print(f"Updated {featClassName} in geodatabase")
         else:
             print(f"{featClassName} does not exist in the geodatabase")
