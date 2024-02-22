@@ -42,3 +42,10 @@ def update_geodatabase(shp_directory, gdb_directory, id_field):
         print("Geodatabase update complete")
     else:
         print("No shapefiles found in workspace")
+
+# user input
+shp_directory = input("Enter the shapefile directory: ")
+gdb_directory = input("Enter the geodatabase directory: ")
+id_field = input("Enter the ID field name: ")
+
+update_geodatabase(shp_directory, gdb_directory, id_field)
